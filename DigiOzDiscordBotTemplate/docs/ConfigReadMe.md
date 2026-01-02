@@ -1,0 +1,78 @@
+# Configuration README
+
+This document explains the configuration options in `config.py` and how they affect bot behavior, including slash (`/`) command registration.
+
+## Where to set values
+- The project uses `python-dotenv` to load environment variables from a `.env` file if present.
+- You can set values directly in environment variables or in a `.env` file at the project root. Example `.env` entries:
+
+```
+DISCORD_TOKEN=your_token_here
+MESSAGE_CONTENT_INTENT=false
+GUILD_ID=123456789012345678
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=secret
+DB_NAME=discord_bot_db_1
+```
+
+Do NOT commit real tokens or passwords to source control.
+
+## Settings in `config.py`
+
+- `TOKEN` (string)
+  - Discord application bot token. Required to run the bot.
+  - Read from environment variable `DISCORD_TOKEN`. If missing the application raises an error at startup.
+  - Keep tokens secret. If the token is invalid or revoked the bot will fail to connect.
+
+- `MESSAGE_CONTENT_INTENT` (bool)
+  - Controls whether `intents.message_content` is requested when the bot starts.
+  - Read from `MESSAGE_CONTENT_INTENT` environment variable (`true`/`1`/`yes` enable).
+  - If enabled, the bot will request the privileged "Message Content" intent. This must be enabled in the Discord Developer Portal for your application (on the application's Bot page) or the connection will be rejected with a privileged intents error.
+  - If your bot does not need message content (for example, if you use slash commands), leave this disabled.
+
+- `GUILD_ID` (int or None)
+  - Optional. When set to a numeric guild (server) ID, the bot will sync slash commands only to that guild during startup. This is useful during development because guild command registration is effectively instant.
+  - Read from environment variable `GUILD_ID`. If not set, global command sync is used (global propagation can take up to an hour).
+  - The bot also includes an `on_guild_join` handler that attempts to sync commands to any guild it joins, making slash commands available immediately for new guilds.
+
+- `DB_CONFIG` (dict)
+  - Database connection settings passed to `aiomysql.create_pool()`.
+  - Keys:
+    - `host` (string) — database hostname (default: `localhost`).
+    - `user` (string) — database user (default: `root`).
+    - `password` (string) — database password.
+    - `db` (string) — database name.
+    - `autocommit` (bool) — whether to enable autocommit (default: `True`).
+  - Set DB values via `DB_HOST`, `DB_USER`, `DB_PASSWORD`, and `DB_NAME` environment variables.
+
+## Slash (`/`) commands behavior
+- The project registers slash commands with `discord.app_commands` (via `bot.tree.command`).
+- Registration and sync behavior:
+  - If `GUILD_ID` is configured, the bot syncs commands to that guild on startup (fast).
+  - If `GUILD_ID` is not set, the bot performs a global sync (`await self.tree.sync()`), which can take up to ~1 hour to propagate.
+  - When the bot joins a new guild, the `on_guild_join` event attempts to sync commands to that guild so commands are available immediately there.
+- Implementation notes:
+  - Slash command handlers receive a `discord.Interaction` and must use `interaction.response.send_message(...)`.
+  - Slash commands can respond ephemerally (visible only to the user) using `ephemeral=True` when sending the response.
+  - Ensure your OAuth invite includes the `applications.commands` scope when adding the bot to servers.
+
+## Prefix (`!`) commands
+- The bot still exposes legacy prefix commands (default `!`) via `discord.ext.commands` for backward compatibility.
+- Both styles coexist; users in guilds will prefer `/` commands when available.
+
+## Developer portal settings
+- Enable privileged intents (if using `MESSAGE_CONTENT_INTENT`):
+  - Visit https://discord.com/developers/applications -> select your app -> Bot -> enable "Message Content Intent".
+- Make sure the bot's OAuth2 scopes include `bot` and `applications.commands` when generating invite links.
+
+## Troubleshooting
+- Privileged intents error: set `MESSAGE_CONTENT_INTENT=false` or enable the intent in the Developer Portal.
+- Slash commands not visible in a server: either the bot has not been synced for that guild, or you need to wait for global propagation. For fast testing set `GUILD_ID` to your development server's ID or rely on the `on_guild_join` sync.
+- Invalid token: ensure `DISCORD_TOKEN` is correct and has no surrounding quotes or extra whitespace.
+
+## Security
+- Never store tokens or database passwords in source control.
+- Use environment variables or a secret management solution in production.
+
+If further docs or examples are desired (e.g., `.env` templates, invite URL examples, or command examples), specify which additions are needed.

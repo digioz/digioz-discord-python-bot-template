@@ -1,0 +1,69 @@
+# Privileged Message Content Intent
+
+## Summary
+
+This document explains the warning:
+
+```
+[WARNING ] discord.ext.commands.bot: Privileged message content intent is missing, commands may not work as expected.
+```
+
+That warning means your bot does not have the Message Content intent enabled. Without it, the Discord gateway will omit raw message content for most messages, which breaks message-based commands, `on_message`, and any logic that reads `message.content`.
+
+## Why this happens
+
+Discord separates gateway intents to limit sensitive data exposure. The Message Content intent is privileged and must be enabled in two places:
+
+1. The Discord Developer Portal for your application (server-side setting).
+2. In your bot code, by requesting the intent with `discord.Intents` before creating the client.
+
+If either side is not configured, the library warns and your message-content dependent features may not receive message text.
+
+## How to enable the Message Content intent
+
+1. Open the Discord Developer Portal at https://discord.com/developers/applications and select your application.
+2. Go to the `Bot` section.
+3. Under `Privileged Gateway Intents`, toggle **Message Content Intent** on and Save Changes.
+
+Note: If your bot is in 100+ guilds, enabling privileged intents may require verification by Discord.
+
+## How to enable the intent in code
+
+Set `intents.message_content = True` before creating your bot client. Example:
+
+```python
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = BotClient(
+    token=TOKEN,
+    db_config=DB_CONFIG,
+    message_content_intent=True,
+    guild_id=GUILD_ID,
+    intents=intents,
+)
+```
+
+If your project already exposes a `MESSAGE_CONTENT_INTENT` config value (for example in `config.py`), verify it is `True` and that `bot_core.BotClient` uses it to set `intents.message_content` before client creation.
+
+## Alternatives
+
+- If your bot only uses application (slash) commands and interactions, you can keep message content disabled and rely on interactions instead.
+
+## Troubleshooting
+
+- Restart the bot after changing the Developer Portal setting.
+- Confirm you edited the correct application in the Developer Portal.
+- Make sure no other code constructs create a `discord.Client` or `commands.Bot` without the proper `intents`.
+- Search the codebase for additional client instantiations that may omit `intents.message_content`.
+- If the warning persists, verify the `message_content` flag is set prior to client creation and check logs for other errors.
+
+## Quick verification steps
+
+1. Enable intent in the Developer Portal.
+2. Set `intents.message_content = True` in code and restart the bot.
+3. Verify the startup logs — the warning should disappear.
+
+## Location
+
+Saved as `docs/PriviledgedMessageIntentReadMe.md` in the repository.
