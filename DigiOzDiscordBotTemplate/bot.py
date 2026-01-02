@@ -1,5 +1,4 @@
 import logging
-import os
 import discord
 
 from config import TOKEN, DB_CONFIG, MESSAGE_CONTENT_INTENT, GUILD_ID
