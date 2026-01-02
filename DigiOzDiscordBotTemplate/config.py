@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 # Load environment variables from a .env file when available
 load_dotenv()
 
-# Discord token can come from the DISCORD_TOKEN env var or be set here directly
-TOKEN = os.getenv('DISCORD_TOKEN', 'YOUR_DISCORD_APP_TOKEN')
+# Discord token must be provided via environment variable
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 # Whether to request the privileged message content intent. Set to 'true'/'1' to enable.
 MESSAGE_CONTENT_INTENT = os.getenv('MESSAGE_CONTENT_INTENT', 'false').lower() in ('1', 'true', 'yes')
@@ -22,7 +22,7 @@ except ValueError:
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'YOUR_PASSWORD'),
+    'password': os.getenv('DB_PASSWORD', None),
     'db': os.getenv('DB_NAME', 'discord_bot_db_1'),
     'autocommit': True
 }
