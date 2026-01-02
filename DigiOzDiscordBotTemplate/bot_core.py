@@ -69,6 +69,7 @@ class BotClient(commands.Bot):
                     )
         except Exception:
             logger.exception("Failed to initialize DB schema")
+            raise
 
         # Load command modules from the commands package
         package = self._commands_package
