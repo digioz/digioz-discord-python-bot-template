@@ -44,9 +44,14 @@ class BotClient(commands.Bot):
                 self.db_pool = await aiomysql.create_pool(**pool_kwargs)
                 break
             except Exception as exc:
-                logger.exception("Failed to create DB pool (attempt %d/%d): %s", attempt, retries, exc)
                 if attempt == retries:
+                    logger.exception(
+                        "Failed to create DB pool after %d attempts: %s", retries, exc
+                    )
                     raise
+                logger.warning(
+                    "Failed to create DB pool (attempt %d/%d): %s", attempt, retries, exc
+                )
                 await asyncio.sleep(delay)
                 delay *= 2
 
