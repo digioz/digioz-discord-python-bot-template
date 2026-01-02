@@ -27,7 +27,9 @@
     <Compile Include="bot_core.py" />
     <Compile Include="commands\ping.py" />
     <Compile Include="commands\profile.py" />
+    <Compile Include="commands\__init__.py" />
     <Compile Include="config.py" />
+    <Compile Include="__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include=".env" />
